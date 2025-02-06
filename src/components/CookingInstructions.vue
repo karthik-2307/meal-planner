@@ -4,7 +4,8 @@ import type { Ref } from "vue";
 import type { Recipe } from "@/types/spoonacular";
 import { useRecipeInformation } from "@/composables/recipeApi";
 import AppLoader from "./AppLoader.vue";
-
+import { useCacheStore } from "@/stores/cache";
+const store = useCacheStore();
 // Define props
 const props = defineProps({
   id: {
@@ -24,12 +25,15 @@ const panel = ref<number | null>(1);
 // Function to fetch recipe details
 const getRecipeDetails = async (id: number): Promise<void> => {
   console.log("Fetching recipe for ID:", id); 
-
+  const cacheKey = `recipe-details-${id}`;
   try {
+    if (store.cachedData(cacheKey)) {
+    recipe.value = store.cachedData(cacheKey) as Recipe;
+  } else {
     const data = await useRecipeInformation(id.toString()) as Recipe;
     console.log("Received Data:", data); 
-
-    recipe.value = data;
+    store.cacheData(cacheKey, data);
+    recipe.value = data;}
   } catch (error) {
     console.error("Error fetching recipe:", error);
   }
